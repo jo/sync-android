@@ -17,6 +17,7 @@ package com.cloudant.sync.replication;
 import com.cloudant.common.RequireRunningCouchDB;
 import com.cloudant.mazha.Response;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -89,7 +90,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
     private void assertDataDeleted() throws Exception {
         for(String id : cache.getAllDeletedIds()) {
             logger.info("Deleted id: " + id);
-            BasicDocumentRevision obj = datastore.getDocument(id);
+            DocumentRevision obj = datastore.getDocument(id);
             logger.info("Deleted: " + obj.isDeleted());
             Assert.assertTrue(obj.isDeleted());
         }
@@ -99,7 +100,7 @@ public class BasicPullStrategyTest2 extends ReplicationTestBase {
         for(String id : cache.getAllDocumentIds()) {
             Bar bar = cache.getData(id);
             logger.info("Id: " + bar);
-            BasicDocumentRevision obj = datastore.getDocument(bar.getId(), bar.getRevision());
+            DocumentRevision obj = datastore.getDocument(bar.getId(), bar.getRevision());
             Assert.assertNotNull(obj);
         }
     }

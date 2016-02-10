@@ -23,6 +23,7 @@ import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DocumentException;
 import com.cloudant.sync.datastore.DocumentNotFoundException;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.DocumentRevsList;
 import com.cloudant.sync.datastore.DocumentRevsUtils;
@@ -121,10 +122,10 @@ class DatastoreWrapper {
         }
     }
 
-    Map<String, DocumentRevisionTree> getDocumentTrees(List<BasicDocumentRevision> documents) {
+    Map<String, DocumentRevisionTree> getDocumentTrees(List<? extends DocumentRevision> documents) {
         Map<String, DocumentRevisionTree> allDocumentTrees =
                 new HashMap<String, DocumentRevisionTree>();
-        for(BasicDocumentRevision doc: documents) {
+        for(DocumentRevision doc: documents) {
             DocumentRevisionTree tree =
                     this.dbCore.getAllRevisionsOfDocument(doc.getId());
             allDocumentTrees.put(doc.getId(), tree);

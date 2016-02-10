@@ -245,11 +245,12 @@ public interface DatastoreExtended extends Datastore {
      *
      * <p>Used by replicator when pushing attachments</p>
      *
-     * @param rev The revision with which the attachment is associated
+     * @param id The revision ID with which the attachment is associated
+     * @param rev The document ID with which the attachment is associated
      * @param attachmentName Name of the attachment
      * @return <code>Attachment</code> or null if there is no attachment with that name.
      */
-    Attachment getAttachment(BasicDocumentRevision rev, String attachmentName);
+    Attachment getAttachment(String id, String rev, String attachmentName);
 
     /**
      * <p>Returns all attachments for the revision.</p>

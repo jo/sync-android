@@ -210,30 +210,13 @@ public class DocumentRevisionBuilder {
         return this;
     }
 
-    /**
-     * Builds and returns the {@link com.cloudant.sync.datastore.MutableDocumentRevision} for this builder.
-     * @return {@link com.cloudant.sync.datastore.MutableDocumentRevision} for this builder.
-     */
-    public MutableDocumentRevision buildMutable() {
-        MutableDocumentRevision revision = new MutableDocumentRevision(this.revId);
-        revision.body = this.body;
-        revision.docId = this.docId;
-        return revision;
-    }
 
     /**
      * Builds and returns the {@link com.cloudant.sync.datastore.ProjectedDocumentRevision} for this builder.
      * @return {@link com.cloudant.sync.datastore.ProjectedDocumentRevision} for this builder.
      */
     public ProjectedDocumentRevision buildProjected() {
-        BasicDocumentRevision.BasicDocumentRevisionOptions options = new BasicDocumentRevision.BasicDocumentRevisionOptions();
-        options.sequence = sequence;
-        options.docInternalId = docInternalId;
-        options.deleted = deleted;
-        options.current = current;
-        options.parent = parent;
-        options.attachments = attachments;
-        return new ProjectedDocumentRevision(docId, revId, body, options, datastore);
+        return new ProjectedDocumentRevision(docId, revId, deleted, attachments, body, datastore);
     }
 
     /**

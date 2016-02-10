@@ -15,7 +15,6 @@
 package com.cloudant.sync.datastore;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,15 +44,15 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         documentUpdated = new CountDownLatch(1);
         documentCreated = new CountDownLatch(2); // 2 because the call to createDocument will also fire
         // create a document and insert the first revision
-        MutableDocumentRevision doc1_rev1Mut = new MutableDocumentRevision();
-        doc1_rev1Mut.body = bodyOne;
-        BasicDocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
+        DocumentRevision doc1_rev1Mut = new DocumentRevision();
+        doc1_rev1Mut.setBody(bodyOne);
+        BasicDocumentRevision doc1_rev1 = (BasicDocumentRevision)datastore.createDocumentFromRevision(doc1_rev1Mut);
 
         ArrayList<String> revisionHistory = new ArrayList<String>();
         revisionHistory.add(doc1_rev1.getRevision());
         
         // now do a force insert - we should get an updated event as it's already there
-        datastore.forceInsert(doc1_rev1, revisionHistory,null, null, false);
+        datastore.forceInsert((BasicDocumentRevision)doc1_rev1, revisionHistory,null, null, false);
         boolean ok1 = NotificationTestUtils.waitForSignal(documentUpdated);
         Assert.assertTrue("Didn't receive document updated event", ok1);
 
@@ -71,9 +70,9 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         boolean pullAttachmentsInline = true;
 
         // create a document and insert the first revision
-        MutableDocumentRevision doc1_rev1Mut = new MutableDocumentRevision();
-        doc1_rev1Mut.body = bodyOne;
-        BasicDocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
+        DocumentRevision doc1_rev1Mut = new DocumentRevision();
+        doc1_rev1Mut.setBody(bodyOne);
+        BasicDocumentRevision doc1_rev1 = (BasicDocumentRevision)datastore.createDocumentFromRevision(doc1_rev1Mut);
         Map<String, Object> atts = new HashMap<String, Object>();
         Map<String, Object> att1 = new HashMap<String, Object>();
 
@@ -87,10 +86,10 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         // now do a force insert and then see if we get the attachment back
         datastore.forceInsert(doc1_rev1, revisionHistory, atts,null, pullAttachmentsInline);
 
-        Attachment storedAtt = datastore.getAttachment(doc1_rev1, "att1");
+        Attachment storedAtt = datastore.getAttachment(doc1_rev1.getId(), doc1_rev1.getRevision(), "att1");
         Assert.assertNotNull(storedAtt);
 
-        Attachment noSuchAtt = datastore.getAttachment(doc1_rev1, "att2");
+        Attachment noSuchAtt = datastore.getAttachment(doc1_rev1.getId(), doc1_rev1.getRevision(), "att2");
         Assert.assertNull(noSuchAtt);
     }
 
@@ -107,9 +106,9 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         extensions.createNewFile();
         extensions.setWritable(false);
 
-        MutableDocumentRevision doc1_rev1Mut = new MutableDocumentRevision();
-        doc1_rev1Mut.body = bodyOne;
-        BasicDocumentRevision doc1_rev1 = datastore.createDocumentFromRevision(doc1_rev1Mut);
+        DocumentRevision doc1_rev1Mut = new DocumentRevision();
+        doc1_rev1Mut.setBody(bodyOne);
+        BasicDocumentRevision doc1_rev1 = (BasicDocumentRevision)datastore.createDocumentFromRevision(doc1_rev1Mut);
         Map<String, Object> atts = new HashMap<String, Object>();
         Map<String, Object> att1 = new HashMap<String, Object>();
 
@@ -132,7 +131,7 @@ public class ForceInsertTest extends BasicDatastoreTestBase {
         // adding the attachment should have failed transactionally, so the rev should not exist as well
         Assert.assertFalse(datastore.containsDocument(doc1_rev1.getId(), doc1_rev1.getRevision()));
 
-        Attachment storedAtt = datastore.getAttachment(doc1_rev1, "att1");
+        Attachment storedAtt = datastore.getAttachment(doc1_rev1.getId(), doc1_rev1.getRevision(), "att1");
         Assert.assertNull(storedAtt);
     }
 

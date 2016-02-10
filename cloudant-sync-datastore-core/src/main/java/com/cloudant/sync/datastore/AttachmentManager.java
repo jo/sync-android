@@ -279,14 +279,13 @@ class AttachmentManager {
 
     protected static Attachment getAttachment(SQLDatabase db, String attachmentsDir,
                                               AttachmentStreamFactory attachmentStreamFactory,
-                                              BasicDocumentRevision rev, String attachmentName)
+                                              long sequence, String attachmentName)
             throws AttachmentException {
         Cursor c = null;
         try {
              c = db.rawQuery(SQL_ATTACHMENTS_SELECT,
-                     new String[]{attachmentName, String.valueOf(rev.getSequence())});
+                     new String[]{attachmentName, String.valueOf(sequence)});
             if (c.moveToFirst()) {
-                 int sequence = c.getInt(c.getColumnIndex("sequence"));
                  String filename = c.getString(c.getColumnIndex("filename"));
                  byte[] key = c.getBlob(c.getColumnIndex("key"));
                  String type = c.getString(c.getColumnIndex("type"));
@@ -304,7 +303,7 @@ class AttachmentManager {
             return null;
         } catch (SQLException e) {
             logger.log(Level.SEVERE,
-                    String.format("Failed to get %1$s for doc %2$s", rev.getId(), attachmentName),
+                    String.format("Failed to get attachment %s for sequence %d", attachmentName, sequence),
                     e);
             throw new AttachmentException(e);
         } finally {

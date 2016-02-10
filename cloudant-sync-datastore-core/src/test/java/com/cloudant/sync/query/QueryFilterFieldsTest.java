@@ -20,11 +20,9 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
-import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.ConflictException;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.datastore.ProjectedDocumentRevision;
 import com.cloudant.sync.util.SQLDatabaseTestUtils;
 import com.cloudant.sync.util.TestUtils;
@@ -134,12 +132,12 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
             assertThat((String) revBody.get("name"), is("mike"));
 
             assertThat(rev, instanceOf(ProjectedDocumentRevision.class));
-            MutableDocumentRevision mutable = ((ProjectedDocumentRevision) rev).mutableCopy();
-            Map<String, Object> mutableBody = mutable.getBody().asMap();
-            assertThat(mutableBody.keySet(), containsInAnyOrder("name", "age", "pet"));
-            assertThat((String) mutableBody.get("name"), is("mike"));
-            assertThat((Integer) mutableBody.get("age"), is(12));
-            assertThat((String) mutableBody.get("pet"), is("cat"));
+            DocumentRevision copy = rev.copy();
+            Map<String, Object> bodyCopy = copy.getBody().asMap();
+            assertThat(bodyCopy.keySet(), containsInAnyOrder("name", "age", "pet"));
+            assertThat((String) bodyCopy.get("name"), is("mike"));
+            assertThat((Integer) bodyCopy.get("age"), is(12));
+            assertThat((String) bodyCopy.get("pet"), is("cat"));
         }
     }
 
@@ -157,13 +155,13 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
             assertThat(revBody.keySet(), contains("name"));
             assertThat((String) revBody.get("name"), is("mike"));
 
-            BasicDocumentRevision original = ds.getDocument(rev.getId());
-            MutableDocumentRevision update = original.mutableCopy();
+            DocumentRevision original = ds.getDocument(rev.getId());
+            DocumentRevision update = original;
             Map<String, Object> updateBody = original.getBody().asMap();
             updateBody.put("name", "charles");
-            update.body = DocumentBodyFactory.create(updateBody);
+            update.setBody(DocumentBodyFactory.create(updateBody));
             assertThat(ds.updateDocumentFromRevision(update), is(notNullValue()));
-            assertThat(((ProjectedDocumentRevision) rev).mutableCopy(), is(nullValue()));
+            assertThat(((ProjectedDocumentRevision) rev).copy(), is(nullValue()));
         }
     }
 
@@ -190,7 +188,7 @@ public class QueryFilterFieldsTest extends AbstractQueryTestBase {
                 e.printStackTrace();
             }
 
-            assertThat(((ProjectedDocumentRevision) rev).mutableCopy(), is(nullValue()));
+            assertThat(((ProjectedDocumentRevision) rev).copy(), is(nullValue()));
         }
     }
 

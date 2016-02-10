@@ -19,12 +19,10 @@ import com.cloudant.mazha.NoResourceException;
 import com.cloudant.sync.datastore.DocumentBody;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionBuilder;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -315,10 +313,9 @@ public class BasicPushStrategyTest extends ReplicationTestBase {
         BasicPushStrategy replicator = super.getPushStrategy();
 
         String id = "\u738b\u4e1c\u5347";
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.body = createDBBody("Tom");
-        rev.docId = id;
-        BasicDocumentRevision saved = datastore.createDocumentFromRevision(rev);
+        DocumentRevision rev = new DocumentRevision(id);
+        rev.setBody(createDBBody("Tom"));
+        DocumentRevision saved = datastore.createDocumentFromRevision(rev);
 
         this.push(replicator, 1);
         assertPushReplicationStatus(replicator, 1, 2, "1");

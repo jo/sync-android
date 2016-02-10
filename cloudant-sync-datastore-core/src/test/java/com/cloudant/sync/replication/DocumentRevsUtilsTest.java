@@ -20,8 +20,6 @@ import com.cloudant.sync.datastore.DocumentRevsUtils;
 import com.cloudant.sync.util.JSONUtils;
 import com.cloudant.sync.util.TestUtils;
 
-import junit.framework.TestCase;
-
 import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.junit.Test;

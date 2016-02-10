@@ -12,6 +12,7 @@
 
 package com.cloudant.sync.datastore;
 
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -22,7 +23,7 @@ import java.util.logging.Logger;
  *  document when called, to prevent accidental data loss which might come
  *  from saving a projected document.
  */
-public class ProjectedDocumentRevision extends BasicDocumentRevision {
+public class ProjectedDocumentRevision extends DocumentRevision {
 
     private static final Logger logger = Logger.getLogger(ProjectedDocumentRevision.class.getCanonicalName());
 
@@ -30,27 +31,16 @@ public class ProjectedDocumentRevision extends BasicDocumentRevision {
 
     ProjectedDocumentRevision(String docId,
                               String revId,
+                              boolean deleted,
+                              List<? extends Attachment> attachments,
                               DocumentBody body,
-                              BasicDocumentRevisionOptions options,
                               Datastore datastore) {
-        super(docId, revId, body, options);
+        super(docId, revId);
+        this.deleted = deleted;
+        super.setAttachmentsInternal(attachments);
+        this.body = body;
         this.datastore = datastore;
     }
 
-    @Override
-    public MutableDocumentRevision mutableCopy() {
-        try {
-            BasicDocumentRevision rev = datastore.getDocument(this.getId());
 
-            // Don't want to return an updated version, breaks contract of mutableCopy
-            if (!rev.getRevision().equals(this.getRevision())) {
-                return null;
-            }
-
-            return rev.mutableCopy();
-        } catch (DocumentNotFoundException e){
-            logger.log(Level.SEVERE,String.format("Failed to load document %s from datastore",this.toString()),e);
-            return null;
-        }
-    }
 }

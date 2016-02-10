@@ -14,7 +14,7 @@
 
 package com.cloudant.sync.notifications;
 
-import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 
 public class DocumentUpdated extends DocumentModified {
 
@@ -30,8 +30,8 @@ public class DocumentUpdated extends DocumentModified {
      * @param newDocument
      *            New document revision
      */
-    public DocumentUpdated(BasicDocumentRevision prevDocument,
-            BasicDocumentRevision newDocument) {
+    public DocumentUpdated(DocumentRevision prevDocument,
+                           DocumentRevision newDocument) {
         super(prevDocument, newDocument);
     }
 

@@ -401,6 +401,27 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return null;
     }
 
+    private long getSequenceInQueue(SQLDatabase db, String id, String rev)
+            throws DatastoreException {
+        Cursor cursor = null;
+        try {
+            String[] args = (rev == null) ? new String[]{id} : new String[]{id, rev};
+            String sql = (rev == null) ? GET_SEQUENCE_CURRENT_REVISION : GET_SEQUENCE_GIVEN_REVISION;
+            cursor = db.rawQuery(sql, args);
+            if (cursor.moveToFirst()) {
+                long sequence = cursor.getLong(0);
+                return sequence;
+            } else {
+                return -1;
+            }
+        } catch (SQLException e) {
+            logger.log(Level.SEVERE,"Error sequence with id: " + id + "and rev " + rev,e);
+            throw new DatastoreException(String.format("Could not find sequence with id %s at revision %s",id,rev),e);
+        } finally {
+            DatabaseUtils.closeCursorQuietly(cursor);
+        }
+    }
+
     public DocumentRevisionTree getAllRevisionsOfDocument(final String docId) {
 
         try {
@@ -470,7 +491,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                             ids.add(cursor.getLong(0));
                             lastSequence = Math.max(lastSequence, cursor.getLong(1));
                         }
-                        List<BasicDocumentRevision> results = getDocumentsWithInternalIdsInQueue(db, ids);
+                        List<? extends DocumentRevision> results = getDocumentsWithInternalIdsInQueue(db, ids);
                         if(results.size() != ids.size()) {
                             throw new IllegalStateException("The number of document does not match number of ids, " +
                                     "something must be wrong here.");
@@ -572,7 +593,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public List<BasicDocumentRevision> getAllDocuments(final int offset,final  int limit,final boolean descending) {
+    public List<? extends DocumentRevision> getAllDocuments(final int offset,final  int limit,final boolean descending) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         if (offset < 0) {
             throw new IllegalArgumentException("offset must be >= 0");
@@ -581,9 +602,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
             throw new IllegalArgumentException("limit must be >= 0");
         }
         try {
-            return queue.submit(new SQLQueueCallable<List<BasicDocumentRevision>>(){
+            return queue.submit(new SQLQueueCallable<List<? extends DocumentRevision>>(){
                 @Override
-                public List<BasicDocumentRevision> call(SQLDatabase db) throws Exception {
+                public List<? extends DocumentRevision> call(SQLDatabase db) throws Exception {
                     // Generate the SELECT statement, based on the options:
                     String sql = String.format("SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs " +
                                     "WHERE deleted = 0 AND current = 1 AND docs.doc_id = revs.doc_id " +
@@ -615,18 +636,18 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public List<BasicDocumentRevision> getDocumentsWithIds(final List<String> docIds) {
+    public List<? extends DocumentRevision> getDocumentsWithIds(final List<String> docIds) {
         Preconditions.checkState(this.isOpen(), "Database is closed");
         Preconditions.checkNotNull(docIds, "Input document id list can not be null");
         try {
-            return queue.submit(new SQLQueueCallable<List<BasicDocumentRevision>>(){
+            return queue.submit(new SQLQueueCallable<List<? extends DocumentRevision>>(){
                 @Override
-                public List<BasicDocumentRevision> call(SQLDatabase db) throws Exception {
+                public List<? extends DocumentRevision> call(SQLDatabase db) throws Exception {
                     String sql = String.format("SELECT " + FULL_DOCUMENT_COLS + " FROM revs, docs" +
                             " WHERE docid IN ( %1$s ) AND current = 1 AND docs.doc_id = revs.doc_id " +
                             " ORDER BY docs.doc_id ", DatabaseUtils.makePlaceholders(docIds.size()));
                     String[] args = docIds.toArray(new String[docIds.size()]);
-                    List<BasicDocumentRevision> docs = getRevisionsFromRawQuery(db,sql, args);
+                    List<? extends DocumentRevision> docs = getRevisionsFromRawQuery(db,sql, args);
                     // Sort in memory since seems not able to sort them using SQL
                     return sortDocumentsAccordingToIdList(docIds, docs);
                 }
@@ -654,10 +675,10 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         }
     }
 
-    private List<BasicDocumentRevision> sortDocumentsAccordingToIdList(List<String> docIds,
-                                                                       List<BasicDocumentRevision> docs) {
-        Map<String, BasicDocumentRevision> idToDocs = putDocsIntoMap(docs);
-        List<BasicDocumentRevision> results = new ArrayList<BasicDocumentRevision>();
+    private List<? extends DocumentRevision> sortDocumentsAccordingToIdList(List<String> docIds,
+                                                                       List<? extends DocumentRevision> docs) {
+        Map<String, DocumentRevision> idToDocs = putDocsIntoMap(docs);
+        List<DocumentRevision> results = new ArrayList<DocumentRevision>();
         for (String id : docIds) {
             if (idToDocs.containsKey(id)) {
                 results.add(idToDocs.remove(id));
@@ -669,9 +690,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
         return results;
     }
 
-    private Map<String, BasicDocumentRevision> putDocsIntoMap(List<BasicDocumentRevision> docs) {
-        Map<String, BasicDocumentRevision> map = new HashMap<String, BasicDocumentRevision>();
-        for (BasicDocumentRevision doc : docs) {
+    private Map<String, DocumentRevision> putDocsIntoMap(List<? extends DocumentRevision> docs) {
+        Map<String, DocumentRevision> map = new HashMap<String, DocumentRevision>();
+        for (DocumentRevision doc : docs) {
             // id should be unique cross all docs
             assert !map.containsKey(doc.getId());
             map.put(doc.getId(), doc);
@@ -1620,19 +1641,9 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                         return null;
                     }
 
-                        // if it's BasicDocumentRev:
-                        // - keep the winner, delete the rest
-                        // if it's MutableDocumentRev:
-                        // - delete all except the sourceRevId and graft the new revision on later
-
-                        // the revid to keep:
-                        // - this will be the source rev id if it's a MutableDocumentRev
-                        // - this will be rev id otherwise
-                        String revIdKeep;
-                        if (newWinner.getClass() == MutableDocumentRevision.class) {
-                            revIdKeep = ((MutableDocumentRevision)newWinner).sourceRevisionId;
-                        } else {
-                            revIdKeep = newWinner.getRevision();
+                        String revIdKeep = newWinner.getRevision();
+                        if (revIdKeep == null) {
+                            throw new IllegalArgumentException("Winning revision must have a revision id");
                         }
 
                         for(BasicDocumentRevision revision : docTree.leafRevisions()) {
@@ -1653,7 +1664,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                         }
 
                         // if it's MutableDocumentRev: graft the new revision on
-                        if (newWinner.getClass() == MutableDocumentRevision.class) {
+                        if (newWinner.bodyModified || (newWinner.attachments != null && newWinner.attachments.hasChanged())) {
 
                             // We need to work out which of the attachments for the revision are ones
                             // we can copy over because they exist in the attachment store already and
@@ -1666,11 +1677,13 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                             final List<SavedAttachment> existingAttachments =
                                     AttachmentManager.findExistingAttachments(attachments);
 
-                            updateDocumentFromRevision(db, (MutableDocumentRevision) newWinner,
+                            updateDocumentFromRevision(db, newWinner,
                                     preparedNewAttachments,
                                     existingAttachments);
                         }
 
+
+                        
                     return null;
                 }
             }).get();
@@ -1754,13 +1767,14 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
     
     @Override
-    public Attachment getAttachment(final BasicDocumentRevision rev, final String attachmentName) {
+    public Attachment getAttachment(final String id, final String rev, final String attachmentName) {
         try {
             return queue.submit(new SQLQueueCallable<Attachment>() {
                 @Override
                 public Attachment call(SQLDatabase db) throws Exception {
+                    long sequence = getSequenceInQueue(db, id, rev);
                     return AttachmentManager.getAttachment(db, attachmentsDir,
-                            attachmentStreamFactory, rev, attachmentName);
+                            attachmentStreamFactory, sequence, attachmentName);
                 }
             }).get();
         } catch (InterruptedException e) {
@@ -1801,22 +1815,22 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public BasicDocumentRevision createDocumentFromRevision(final MutableDocumentRevision rev)
+    public DocumentRevision createDocumentFromRevision(final DocumentRevision rev)
             throws DocumentException {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
         Preconditions.checkState(isOpen(), "Datastore is closed");
         final String docId;
         // create docid if docid is null
-        if (rev.docId == null) {
+        if (rev.getId() == null) {
             docId = CouchUtils.generateDocumentId();
         } else {
-            docId = rev.docId;
+            docId = rev.getId();
         }
 
         // We need to work out which of the attachments for the revision are ones
         // we can copy over because they exist in the attachment store already and
         // which are new, that we need to prepare for insertion.
-        Collection<Attachment> attachments = rev.attachments != null ? rev.attachments.values() : new ArrayList<Attachment>();
+        Collection<Attachment> attachments = rev.getAttachments() != null ? rev.getAttachments().values() : new ArrayList<Attachment>();
         final List<PreparedAttachment> preparedNewAttachments =
                 AttachmentManager.prepareAttachments(attachmentsDir,
                         attachmentStreamFactory,
@@ -1831,7 +1845,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 public BasicDocumentRevision call(SQLDatabase db) throws Exception {
 
                         // Save document with new JSON body, add new attachments and copy over existing attachments
-                        BasicDocumentRevision saved = createDocumentBody(db, docId, rev.body);
+                        BasicDocumentRevision saved = createDocumentBody(db, docId, rev.getBody());
                         AttachmentManager.addAttachmentsToRevision(db, attachmentsDir, saved, preparedNewAttachments);
                         AttachmentManager.copyAttachmentsToRevision(db, existingAttachments, saved);
 
@@ -1857,7 +1871,7 @@ class BasicDatastore implements Datastore, DatastoreExtended {
     }
 
     @Override
-    public BasicDocumentRevision updateDocumentFromRevision(final MutableDocumentRevision rev)
+    public DocumentRevision updateDocumentFromRevision(final DocumentRevision rev)
             throws DocumentException {
 
         // We need to work out which of the attachments for the revision are ones
@@ -1872,16 +1886,16 @@ class BasicDatastore implements Datastore, DatastoreExtended {
                 AttachmentManager.findExistingAttachments(attachments);
 
         try {
-            BasicDocumentRevision revision = queue.submitTransaction(new SQLQueueCallable<BasicDocumentRevision>(){
+            DocumentRevision revision = queue.submitTransaction(new SQLQueueCallable<DocumentRevision>(){
                 @Override
-                public BasicDocumentRevision call(SQLDatabase db) throws Exception {
+                public DocumentRevision call(SQLDatabase db) throws Exception {
                     return updateDocumentFromRevision(db,
                             rev, preparedNewAttachments, existingAttachments);
                 }
             }).get();
 
             if (revision != null) {
-                eventBus.post(new DocumentUpdated(getDocument(rev.docId,rev.sourceRevisionId),revision));
+                eventBus.post(new DocumentUpdated(getDocument(rev.getId(), rev.getRevision()),revision));
             }
 
             return revision;
@@ -1895,24 +1909,24 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     }
 
-    private BasicDocumentRevision updateDocumentFromRevision(SQLDatabase db,MutableDocumentRevision rev,
+    private DocumentRevision updateDocumentFromRevision(SQLDatabase db, DocumentRevision rev,
                                                              List<PreparedAttachment> preparedNewAttachments,
                                                              List<SavedAttachment> existingAttachments)
             throws ConflictException, AttachmentException, DocumentNotFoundException, DatastoreException {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
 
-            BasicDocumentRevision updated = updateDocumentBody(db, rev.docId, rev.sourceRevisionId, rev.body);
+        BasicDocumentRevision updated = updateDocumentBody(db, rev.getId(), rev.getRevision(), rev.getBody());
             AttachmentManager.addAttachmentsToRevision(db, attachmentsDir, updated, preparedNewAttachments);
 
             AttachmentManager.copyAttachmentsToRevision(db, existingAttachments, updated);
         
             // now re-fetch the revision with updated attachments
-            BasicDocumentRevision updatedWithAttachments = this.getDocumentInQueue(db, updated.getId(), updated.getRevision());
+        DocumentRevision updatedWithAttachments = this.getDocumentInQueue(db, updated.getId(), updated.getRevision());
             return updatedWithAttachments;
     }
 
     @Override
-    public BasicDocumentRevision deleteDocumentFromRevision(final BasicDocumentRevision rev) throws ConflictException {
+    public DocumentRevision deleteDocumentFromRevision(final DocumentRevision rev) throws ConflictException {
         Preconditions.checkNotNull(rev, "DocumentRevision can not be null");
         Preconditions.checkState(isOpen(),"Datastore is closed");
 
@@ -1946,17 +1960,17 @@ class BasicDatastore implements Datastore, DatastoreExtended {
 
     // delete all leaf nodes
     @Override
-    public List<BasicDocumentRevision> deleteDocument(final String id)
+    public List<DocumentRevision> deleteDocument(final String id)
             throws DocumentException  {
         Preconditions.checkNotNull(id, "id can not be null");
         // to return
 
         try {
-            return queue.submitTransaction(new SQLQueueCallable<List<BasicDocumentRevision>>(){
+            return queue.submitTransaction(new SQLQueueCallable<List<DocumentRevision>>(){
 
                 @Override
-                public List<BasicDocumentRevision> call(SQLDatabase db) throws Exception {
-                    ArrayList<BasicDocumentRevision> deleted = new ArrayList<BasicDocumentRevision>();
+                public List<DocumentRevision> call(SQLDatabase db) throws Exception {
+                    ArrayList<DocumentRevision> deleted = new ArrayList<DocumentRevision>();
                     Cursor cursor = null;
                     // delete all in one tx
                     try {

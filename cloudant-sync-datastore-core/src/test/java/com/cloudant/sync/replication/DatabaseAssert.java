@@ -21,6 +21,7 @@ import com.cloudant.mazha.DocumentRevs;
 import com.cloudant.mazha.OkOpenRevision;
 import com.cloudant.mazha.OpenRevision;
 import com.cloudant.sync.datastore.Changes;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
 import com.cloudant.sync.datastore.DatastoreExtended;
@@ -60,10 +61,10 @@ public class DatabaseAssert {
         final String id;
         final boolean deleted;
 
-        final BasicDocumentRevision documentRevision;
+        final DocumentRevision documentRevision;
         final ChangesResult.Row row;
 
-        public ChangeRowAdaptor(BasicDocumentRevision object) {
+        public ChangeRowAdaptor(DocumentRevision object) {
             this.id = object.getId();
             this.deleted = object.isDeleted();
 
@@ -104,7 +105,7 @@ public class DatabaseAssert {
         Changes changesBatch = datastore.changes(0, BATCH_LIMIT);
         while(changesBatch.size() > 0) {
 
-            for (BasicDocumentRevision object : changesBatch.getResults()) {
+            for (DocumentRevision object : changesBatch.getResults()) {
                 ChangeRowAdaptor adaptor = new ChangeRowAdaptor(object);
                 if (alreadyChecked.contains(adaptor.id)) {
                     continue;
@@ -185,7 +186,7 @@ public class DatabaseAssert {
      * Assert the specified document is deleted in both remote CouchDb and local datastore.
      */
     static void checkBothDeleted(String id, DatastoreExtended datastore, CouchClient client) throws Exception {
-        BasicDocumentRevision documentRevision = datastore.getDocument(id);
+        DocumentRevision documentRevision = datastore.getDocument(id);
         Assert.assertTrue(documentRevision.isDeleted());
 
         Map<String, Object> m = client.getDocument(id, documentRevision.getRevision());
@@ -240,7 +241,7 @@ public class DatabaseAssert {
      */
     static void checkWinningRevisionSame(String documentId, DatastoreExtended datastore,
                                          CouchClient client) throws Exception{
-        Map<String, Object> doc1 = datastore.getDocument(documentId).asMap();
+        Map<String, Object> doc1 = ((BasicDocumentRevision)datastore.getDocument(documentId)).asMap();
         Map<String, Object> doc2 = client.getDocument(documentId);
         doc2.remove(CouchConstants._attachments);
         DatabaseAssert.assertSameStringMap(doc1, doc2);

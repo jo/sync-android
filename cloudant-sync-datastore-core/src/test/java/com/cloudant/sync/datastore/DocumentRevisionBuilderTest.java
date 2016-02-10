@@ -52,50 +52,10 @@ public class DocumentRevisionBuilderTest  {
         DocumentRevision revision =
                 DocumentRevisionBuilder.buildRevisionFromMap(documentURI, documentRev);
         Assert.assertNotNull(revision);
-        Assert.assertEquals(body,revision.getBody().asMap());
+        Assert.assertEquals(body, revision.getBody().asMap());
         Assert.assertEquals(revision.getId(),"someIdHere");
         Assert.assertEquals(revision.getRevision(),"3-750dac460a6cc41e6999f8943b8e603e");
 
-    }
-
-    @Test
-    public void buildsMutableRevision(){
-        DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
-        builder.setBody(DocumentBodyFactory.create(body));
-        builder.setDocId("someIdHere");
-        builder.setRevId("3-750dac460a6cc41e6999f8943b8e603e");
-
-        MutableDocumentRevision revision = builder.buildMutable();
-        Assert.assertEquals("someIdHere",revision.docId);
-        Assert.assertEquals(body,revision.body.asMap());
-        Assert.assertEquals("3-750dac460a6cc41e6999f8943b8e603e", revision.getSourceRevisionId());
-        Assert.assertNull(revision.getRevision());
-    }
-
-    @Test
-    public void buildMutableRevisionMissingRevId() {
-        DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
-        builder.setBody(DocumentBodyFactory.create(body));
-        builder.setDocId("someIdHere");
-
-        MutableDocumentRevision revision = builder.buildMutable();
-        Assert.assertEquals("someIdHere",revision.docId);
-        Assert.assertEquals(body,revision.body.asMap());
-        Assert.assertNull(revision.getSourceRevisionId());
-        Assert.assertNull(revision.getRevision());
-    }
-
-    @Test
-    public void buildMutableRevisionMissingDocId() {
-        DocumentRevisionBuilder builder = new DocumentRevisionBuilder();
-        builder.setBody(DocumentBodyFactory.create(body));
-        builder.setRevId("3-750dac460a6cc41e6999f8943b8e603e");
-
-        MutableDocumentRevision revision = builder.buildMutable();
-        Assert.assertNull(revision.docId);
-        Assert.assertEquals(body,revision.body.asMap());
-        Assert.assertEquals("3-750dac460a6cc41e6999f8943b8e603e", revision.getSourceRevisionId());
-        Assert.assertNull(revision.getRevision());
     }
 
     @Test
@@ -108,7 +68,7 @@ public class DocumentRevisionBuilderTest  {
 
 
         Assert.assertNotNull(revision);
-        Assert.assertEquals(body,revision.getBody().asMap());
+        Assert.assertEquals(body, revision.getBody().asMap());
         Assert.assertEquals(revision.getId(),"someIdHere");
         Assert.assertEquals(revision.getRevision(),"3-750dac460a6cc41e6999f8943b8e603e");
         Assert.assertTrue(revision.isDeleted());
@@ -130,7 +90,7 @@ public class DocumentRevisionBuilderTest  {
                 DocumentRevisionBuilder.buildRevisionFromMap(documentURI,documentRev);
 
         Assert.assertNotNull(revision);
-        Assert.assertEquals(body,revision.getBody().asMap());
+        Assert.assertEquals(body, revision.getBody().asMap());
         Assert.assertEquals(revision.getId(),"someIdHere");
         Assert.assertEquals(revision.getRevision(),"3-750dac460a6cc41e6999f8943b8e603e");
         Assert.assertEquals(revision.getAttachments().size(),0);

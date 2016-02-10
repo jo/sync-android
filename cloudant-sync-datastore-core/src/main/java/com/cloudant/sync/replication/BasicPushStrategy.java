@@ -25,6 +25,7 @@ import com.cloudant.sync.datastore.Datastore;
 import com.cloudant.sync.datastore.DatastoreException;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.BasicDocumentRevision;
+import com.cloudant.sync.datastore.DocumentRevision;
 import com.cloudant.sync.datastore.DocumentRevisionTree;
 import com.cloudant.sync.datastore.MultipartAttachmentWriter;
 import com.cloudant.sync.datastore.RevisionHistoryHelper;
@@ -280,11 +281,11 @@ class BasicPushStrategy implements ReplicationStrategy {
 
         // Process the changes themselves in batches, where we post a batch
         // at a time to the remote database's _bulk_docs endpoint.
-        List<List<BasicDocumentRevision>> batches = Lists.partition(
+        List<? extends List<? extends DocumentRevision>> batches = Lists.partition(
                 changes.getResults(),
                 this.bulkInsertSize
         );
-        for (List<BasicDocumentRevision> batch : batches) {
+        for (List<? extends DocumentRevision> batch : batches) {
 
             if (this.state.cancel) { break; }
 

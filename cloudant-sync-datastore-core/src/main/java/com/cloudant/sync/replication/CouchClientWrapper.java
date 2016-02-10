@@ -225,7 +225,6 @@ public class CouchClientWrapper implements CouchDB {
 
         List<Map> allObjs = new ArrayList<Map>();
         for (BasicDocumentRevision obj : revisions) {
-            logger.finer(String.format("Document body: %s",obj.getBody()));
             allObjs.add(obj.asMap());
         }
 

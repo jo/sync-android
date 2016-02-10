@@ -138,9 +138,9 @@ public class BasicDatastoreForceInsertTest {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            BasicDocumentRevision updatedObj = datastore.updateDocumentFromRevision(insertedObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updatedObj = datastore.updateDocumentFromRevision(insertedObj);
 
             Assert.assertNotNull(updatedObj);
 
@@ -168,11 +168,11 @@ public class BasicDatastoreForceInsertTest {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            insertedObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -204,11 +204,11 @@ public class BasicDatastoreForceInsertTest {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            insertedObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -256,11 +256,11 @@ public class BasicDatastoreForceInsertTest {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "3-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            insertedObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
 
             Assert.assertNotNull(updateObj2);
 
@@ -314,11 +314,11 @@ public class BasicDatastoreForceInsertTest {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            updateObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            updateObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
             Assert.assertNotNull(updateObj2);
 
             // Delete the document from the local database
@@ -347,11 +347,11 @@ public class BasicDatastoreForceInsertTest {
             BasicDocumentRevision rev = createDbObject();
             datastore.forceInsert(rev, "1-rev", "2-rev", "4-rev");
 
-            MutableDocumentRevision insertedObj = datastore.getDocument(OBJECT_ID).mutableCopy();
-            insertedObj.body = bodyTwo;
-            MutableDocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj).mutableCopy();
-            updateObj.body = bodyTwo;
-            BasicDocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
+            DocumentRevision insertedObj = datastore.getDocument(OBJECT_ID);
+            insertedObj.setBody(bodyTwo);
+            DocumentRevision updateObj = datastore.updateDocumentFromRevision(insertedObj);
+            updateObj.setBody(bodyTwo);
+            DocumentRevision updateObj2 = datastore.updateDocumentFromRevision(updateObj);
             Assert.assertNotNull(updateObj2);
         }
 

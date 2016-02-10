@@ -21,7 +21,6 @@ import com.cloudant.sync.datastore.ConflictResolver;
 import com.cloudant.sync.datastore.DatastoreExtended;
 import com.cloudant.sync.datastore.DocumentBodyFactory;
 import com.cloudant.sync.datastore.DocumentRevision;
-import com.cloudant.sync.datastore.MutableDocumentRevision;
 import com.cloudant.sync.datastore.UnsavedStreamAttachment;
 import com.cloudant.sync.util.TestUtils;
 
@@ -58,11 +57,10 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         Response response = remoteDb.create(foo1);
 
         // create local (1-rev and 2-rev)
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "doc-a";
-        rev.body = DocumentBodyFactory.create("{\"foo\": \"local\"}".getBytes());
-        MutableDocumentRevision rev2 = this.datastore.createDocumentFromRevision(rev).mutableCopy();
-        rev2.attachments.put("att1", new UnsavedStreamAttachment(
+        DocumentRevision rev = new DocumentRevision("doc-a");
+        rev.setBody(DocumentBodyFactory.create("{\"foo\": \"local\"}".getBytes()));
+        DocumentRevision rev2 = this.datastore.createDocumentFromRevision(rev);
+        rev2.getAttachments().put("att1", new UnsavedStreamAttachment(
                         new ByteArrayInputStream("hello universe".getBytes()),
                         "att1",
                         "text/plain")
@@ -102,10 +100,9 @@ public class AttachmentsConflictsTest extends ReplicationTestBase {
         Response response = remoteDb.create(foo1);
 
         // create local
-        MutableDocumentRevision rev = new MutableDocumentRevision();
-        rev.docId = "doc-a";
-        rev.body = DocumentBodyFactory.create("{\"foo\": \"local\"}".getBytes());
-        rev.attachments.put("att1", new UnsavedStreamAttachment(
+        DocumentRevision rev = new DocumentRevision("doc-a");
+        rev.setBody(DocumentBodyFactory.create("{\"foo\": \"local\"}".getBytes()));
+        rev.getAttachments().put("att1", new UnsavedStreamAttachment(
                         new ByteArrayInputStream("hello universe".getBytes()),
                         "att1",
                         "text/plain")
